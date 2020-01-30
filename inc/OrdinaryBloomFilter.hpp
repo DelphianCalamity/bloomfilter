@@ -31,7 +31,7 @@ public:
     OrdinaryBloomFilter(uint8_t numHashes, uint16_t numBits)
     : AbstractBloomFilter<T>(numHashes, numBits)
     {
-        m_bitarray.reserve(numBits);
+        m_bitarray.resize(numBits);
         for(uint16_t i = 0; i < super::GetNumBits(); i++){
             m_bitarray[i] = 0;
         }
