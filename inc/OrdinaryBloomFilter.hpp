@@ -38,6 +38,16 @@ namespace bloom {
 
         }
 
+        // Construct from bloom vector
+        OrdinaryBloomFilter(uint8_t numHashes, uint16_t numBits, int* bloom)
+                : AbstractBloomFilter<T>(numHashes, numBits)
+        {
+            m_bitarray.resize(numBits);
+            for(uint16_t i = 0; i < super::GetNumBits(); i++){
+                m_bitarray[i] = (bloom[i] == 0) ? 0 : true;
+            }
+        }
+
         virtual void Insert(T const& o) {
             for(uint8_t i = 0; i < super::GetNumHashes(); i++){
                 m_bitarray[super::ComputeHash(o, i)] = true;
