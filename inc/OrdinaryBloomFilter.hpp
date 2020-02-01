@@ -19,135 +19,150 @@ namespace bloom {
  *
  *  @param T Contained type being indexed
  */
-template <typename T>
-class OrdinaryBloomFilter : public AbstractBloomFilter<T> {
+    template <typename T>
+    class OrdinaryBloomFilter : public AbstractBloomFilter<T> {
 
-public:
+    public:
 
-    /** Constructor
-     *  @see AbstractBloomFilter::AbstractBloomFilter
-     */
-    explicit
-    OrdinaryBloomFilter(uint8_t numHashes, uint16_t numBits)
-    : AbstractBloomFilter<T>(numHashes, numBits)
-    {
-        m_bitarray.reserve(numBits);
-        for(uint16_t i = 0; i < super::GetNumBits(); i++){
-            m_bitarray[i] = 0;
+        /** Constructor
+         *  @see AbstractBloomFilter::AbstractBloomFilter
+         */
+        explicit
+        OrdinaryBloomFilter(uint8_t numHashes, uint16_t numBits)
+                : AbstractBloomFilter<T>(numHashes, numBits)
+        {
+            m_bitarray.resize(numBits);
+            for(uint16_t i = 0; i < super::GetNumBits(); i++){
+                m_bitarray[i] = 0;
+            }
+
         }
-    }
-    
-    virtual void Insert(T const& o) {
-        for(uint8_t i = 0; i < super::GetNumHashes(); i++){
-            m_bitarray[super::ComputeHash(o, i)] = true;
-        }
-    }
-    
-    virtual bool Query(T const& o) const {
-        for(uint8_t i = 0; i < super::GetNumHashes(); i++){
-            if(!m_bitarray[super::ComputeHash(o, i)]){
-                return false;
+
+        // Construct from bloom vector
+        OrdinaryBloomFilter(uint8_t numHashes, uint16_t numBits, int* bloom)
+                : AbstractBloomFilter<T>(numHashes, numBits)
+        {
+            m_bitarray.resize(numBits);
+            for(uint16_t i = 0; i < super::GetNumBits(); i++){
+                m_bitarray[i] = (bloom[i] == 0) ? 0 : true;
             }
         }
-        return true;
-    }
-    
-    virtual void Serialize(std::ostream &os) const {
-        uint8_t numHashes = super::GetNumHashes();
-        uint16_t numBits = super::GetNumBits();
 
-        os.write((const char *) &numHashes, sizeof(uint8_t));
-        os.write((const char *) &numBits, sizeof(uint16_t));
-        
-        for(uint16_t i = 0; i < (numBits + 7) / 8; i++){
-            uint8_t byte = 0;
-            for(int j = 0; j < 8 && (i + j) < numBits; j++){
-                byte = (byte << 1) | m_bitarray[8*i+j];
-            }
-            os.write((const char *) &byte, sizeof(uint8_t));
-        }
-    }
-    
-    /** Create an OrdinaryBloomFilter from the content of a binary input
-     * stream. No validation is performed.
-     *
-     * @param  is Input stream to read from
-     * @return Deserialized OrdinaryBloomFilter
-     */
-    static OrdinaryBloomFilter<T> Deserialize(std::istream &is){
-        uint8_t numHashes;
-        uint16_t numBits;
-        
-        is.read((char *) &numHashes, sizeof(uint8_t));
-        is.read((char *) &numBits, sizeof(uint16_t));
-        
-        OrdinaryBloomFilter<T> r (numHashes, numBits);
-        
-        for(uint16_t i = 0; i < (numBits + 7) / 8; i++){
-            uint8_t byte;
-            is.read((char *) &byte, sizeof(uint8_t));
-            for(int j = 0; j < 8 && (i + j) < numBits; j++){
-                r.m_bitarray[8 * i + j] = byte & (1 << (7-j));
+        virtual void Insert(T const& o) {
+            for(uint8_t i = 0; i < super::GetNumHashes(); i++){
+                m_bitarray[super::ComputeHash(o, i)] = true;
             }
         }
-        
-        return r;
-    }
-    
-    /** Halves this OrdinaryBloomFilter, reducing its size at the cost of an
-     *  increased false positive ratio.
-     *
-     *  @return A new OrdinaryBloomFilter with half as many bits.
-     */
-    OrdinaryBloomFilter<T> Compress() const {
-        uint16_t oldNumBits = super::GetNumBits();
-        uint16_t newNumBits = oldNumBits / 2;
-        
-        OrdinaryBloomFilter<T> res(super::GetNumHashes(), newNumBits);
-        
-        for(unsigned i = 0; i < oldNumBits; i++){
-            res.m_bitarray[i % newNumBits] = res.m_bitarray[i % newNumBits] | m_bitarray[i];
-        }
-        
-        return res;
-    }
-    
-    /** Creates a PairedBloomFilter with an empty negative set, and a positive
-     *  set given by this OrdinaryBloomFilter.
-     *
-     *  @return A new PairedBloomFilter
-     */
-    PairedBloomFilter<T> ToPairedBloomFilter() const {
-        uint16_t numBits = super::GetNumBits();
-        PairedBloomFilter<T> res(super::GetNumHashes(), numBits);
-        for(unsigned i = 0; i < numBits; i++){
-            res.m_bitarray[i] = m_bitarray[i];
-        }
-        return res;
-    }
-    
-    /** Update this Bloom filter by adding the contents of a second one.
-     *  The BFs will be combined by logical OR, thus new false positives may be
-     *  introduced.
-     *
-     *  @param other BF to combine into this one
-     */
-    void Union(OrdinaryBloomFilter<T> const& other){
-        for(unsigned i = 0; i < super::GetNumBits(); i++){
-            m_bitarray[i] = m_bitarray[i] | other.m_bitarray[i];
-        }
-    }
-    
-    friend OrdinaryBloomFilter<T> CountingBloomFilter<T>::ToOrdinaryBloomFilter() const;
 
-private:
-    
-    typedef AbstractBloomFilter<T> super;
-    
-    std::vector<bool> m_bitarray;
-    
+        virtual bool Query(T const& o) const {
+            for(uint8_t i = 0; i < super::GetNumHashes(); i++){
+                if(!m_bitarray[super::ComputeHash(o, i)]){
+                    return false;
+                }
+            }
+            return true;
+        }
 
-}; // class OrdinaryBloomFilter
+        virtual void Serialize(std::ostream &os) const {
+            uint8_t numHashes = super::GetNumHashes();
+            uint16_t numBits = super::GetNumBits();
+
+            os.write((const char *) &numHashes, sizeof(uint8_t));
+            os.write((const char *) &numBits, sizeof(uint16_t));
+
+            for(uint16_t i = 0; i < (numBits + 7) / 8; i++){
+                uint8_t byte = 0;
+                for(int j = 0; j < 8 && (i + j) < numBits; j++){
+                    byte = (byte << 1) | m_bitarray[8*i+j];
+                }
+                os.write((const char *) &byte, sizeof(uint8_t));
+            }
+        }
+
+        std::vector<bool>& Get_bloom() {
+            return m_bitarray;
+        }
+
+        /** Create an OrdinaryBloomFilter from the content of a binary input
+         * stream. No validation is performed.
+         *
+         * @param  is Input stream to read from
+         * @return Deserialized OrdinaryBloomFilter
+         */
+        static OrdinaryBloomFilter<T> Deserialize(std::istream &is){
+            uint8_t numHashes;
+            uint16_t numBits;
+
+            is.read((char *) &numHashes, sizeof(uint8_t));
+            is.read((char *) &numBits, sizeof(uint16_t));
+
+            OrdinaryBloomFilter<T> r (numHashes, numBits);
+
+            for(uint16_t i = 0; i < (numBits + 7) / 8; i++){
+                uint8_t byte;
+                is.read((char *) &byte, sizeof(uint8_t));
+                for(int j = 0; j < 8 && (i + j) < numBits; j++){
+                    r.m_bitarray[8 * i + j] = byte & (1 << (7-j));
+                }
+            }
+
+            return r;
+        }
+
+        /** Halves this OrdinaryBloomFilter, reducing its size at the cost of an
+         *  increased false positive ratio.
+         *
+         *  @return A new OrdinaryBloomFilter with half as many bits.
+         */
+        OrdinaryBloomFilter<T> Compress() const {
+            uint16_t oldNumBits = super::GetNumBits();
+            uint16_t newNumBits = oldNumBits / 2;
+
+            OrdinaryBloomFilter<T> res(super::GetNumHashes(), newNumBits);
+
+            for(unsigned i = 0; i < oldNumBits; i++){
+                res.m_bitarray[i % newNumBits] = res.m_bitarray[i % newNumBits] | m_bitarray[i];
+            }
+
+            return res;
+        }
+
+        /** Creates a PairedBloomFilter with an empty negative set, and a positive
+         *  set given by this OrdinaryBloomFilter.
+         *
+         *  @return A new PairedBloomFilter
+         */
+        PairedBloomFilter<T> ToPairedBloomFilter() const {
+            uint16_t numBits = super::GetNumBits();
+            PairedBloomFilter<T> res(super::GetNumHashes(), numBits);
+            for(unsigned i = 0; i < numBits; i++){
+                res.m_bitarray[i] = m_bitarray[i];
+            }
+            return res;
+        }
+
+        /** Update this Bloom filter by adding the contents of a second one.
+         *  The BFs will be combined by logical OR, thus new false positives may be
+         *  introduced.
+         *
+         *  @param other BF to combine into this one
+         */
+        void Union(OrdinaryBloomFilter<T> const& other){
+            for(unsigned i = 0; i < super::GetNumBits(); i++){
+                m_bitarray[i] = m_bitarray[i] | other.m_bitarray[i];
+            }
+        }
+
+        friend OrdinaryBloomFilter<T> CountingBloomFilter<T>::ToOrdinaryBloomFilter() const;
+
+    private:
+
+        typedef AbstractBloomFilter<T> super;
+
+        std::vector<bool> m_bitarray;
+
+
+    }; // class OrdinaryBloomFilter
 
 } // namespace bloom
 
