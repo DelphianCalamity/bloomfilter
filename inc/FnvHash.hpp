@@ -26,11 +26,9 @@ public:
      *  @param buf Buffer of bytes to hash
      *  @param len Number of bytes in buffer
      */
-    void Update(const uint8_t *buf, size_t len){
-        for(size_t i = 0; i < len; i++){
-            m_hash = m_hash * Prime;
-            m_hash = m_hash ^ buf[i];
-        }
+    void Update(const int buf){
+        m_hash = m_hash * Prime;
+        m_hash = m_hash ^ buf;
     }
     
     /** Returns the hash digest.
