@@ -47,7 +47,7 @@ public:
      *                   storage size will differ from this.
      */
     explicit
-    AbstractBloomFilter(uint8_t numHashes, uint16_t numBits)
+    AbstractBloomFilter(uint8_t numHashes, size_t numBits)
     : m_numHashes(numHashes), m_numBits(numBits)
     {}
 
@@ -64,7 +64,7 @@ public:
      * @see     AbstractBloomFilter::AbstractBloomFilter
      * @return  Number of bits, in terms of an ordinary Bloom filter
      */
-    uint16_t GetNumBits() const {
+    size_t GetNumBits() const {
         return m_numBits;
     }
     
@@ -89,7 +89,7 @@ public:
      */
     virtual void Serialize(std::ostream &os) const = 0;
 
-protected:
+//protected:
     
     /** Returns the bit array index associated with the given (object, salt)
      *  pair. Result is guaranteed to be between 0 and GetNumBits() - 1
@@ -99,7 +99,7 @@ protected:
      *  @param  salt Salt to allow creating multiple hashes for an object
      *  @return Index in bit array corresponding to the (object, salt) pair
      */
-    uint16_t ComputeHash(T const& o, uint8_t salt) const {
+    size_t ComputeHash(T const& o, uint8_t salt) const {
         return std::hash<HashParams<T>>{}({o, salt}) % GetNumBits();
     }
 
@@ -111,7 +111,7 @@ private:
     
     /** Number of bits for bit array
      */
-    uint16_t m_numBits;
+    size_t m_numBits;
     
 
 }; // class AbstractBloomFilter
