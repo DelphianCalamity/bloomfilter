@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "AbstractBloomFilter.hpp"
+#include "MurmurHash.hpp"
 
 // forward decl
 namespace bloom {
