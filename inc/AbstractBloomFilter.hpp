@@ -89,7 +89,7 @@ public:
      */
     virtual void Serialize(std::ostream &os) const = 0;
 
-protected:
+//protected:
     
     /** Returns the bit array index associated with the given (object, salt)
      *  pair. Result is guaranteed to be between 0 and GetNumBits() - 1
