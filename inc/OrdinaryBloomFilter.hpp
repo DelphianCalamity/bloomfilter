@@ -40,13 +40,11 @@ namespace bloom {
         }
 
         // Construct from bloom vector
-        OrdinaryBloomFilter(uint8_t numHashes, size_t numBits, int* bloom)
+        OrdinaryBloomFilter(uint8_t numHashes, size_t numBits, const bool* bloom)
                 : AbstractBloomFilter<T>(numHashes, numBits)
         {
             m_bitarray.resize(numBits);
-            for(size_t i = 0; i < super::GetNumBits(); i++){
-                m_bitarray[i] = (bloom[i] == 0) ? 0 : true;
-            }
+            std::copy(bloom, bloom+numBits, m_bitarray.begin());
         }
 
         virtual void Insert(T const& o) {
