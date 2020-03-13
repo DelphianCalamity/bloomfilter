@@ -64,9 +64,9 @@ namespace bloom {
             return true;
         }
 
-        void print() {
+        void fprint(FILE* f) {
             unsigned int bit_pos, byte_pos, value, byte;
-            printf("Bloom Filter: \n [ ");
+            fprintf(f, "Bloom Filter: \n [ ");
 
             for (byte_pos=0; byte_pos<super::GetnumBytes(); byte_pos++) {
                 for (bit_pos=0; bit_pos<8; bit_pos++) {
@@ -75,11 +75,11 @@ namespace bloom {
                     value = value << bit_pos;
                     value = value | byte;
                     if ((value^byte) != 0)
-                        printf("0 ");
-                    else printf("1 ");
+                        fprintf(f, "0 ");
+                    else fprintf(f, "1 ");
                 }
             }
-            printf("]\n\n");
+            fprintf(f, "]\n\n");
 
         }
 
