@@ -80,8 +80,27 @@ namespace bloom {
                 }
             }
             fprintf(f, "]\n\n");
+        }
+
+        void print() {
+            unsigned int bit_pos, byte_pos, value, byte;
+            printf("Bloom Filter: \n [ ");
+
+            for (byte_pos=0; byte_pos<super::GetnumBytes(); byte_pos++) {
+                for (bit_pos=0; bit_pos<8; bit_pos++) {
+                    byte = m_bitarray[byte_pos];
+                    value = 1;
+                    value = value << bit_pos;
+                    value = value | byte;
+                    if ((value^byte) != 0)
+                        printf("0 ");
+                    else printf("1 ");
+                }
+            }
+            printf("]\n\n");
 
         }
+
 
         virtual void Serialize(std::ostream &os) const {
             uint8_t numHashes = super::GetNumHashes();
