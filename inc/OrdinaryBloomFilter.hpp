@@ -64,6 +64,20 @@ namespace bloom {
             return true;
         }
 
+        std::string Hash(T const& o) {
+            std::string hash_string = "";
+            std::vector<size_t> hashes;
+            for (uint8_t i = 0; i < super::GetNumHashes(); i++) {
+                size_t hash = super::ComputeHash(o, i) % (super::GetnumBytes()*8);
+                hashes.push_back(hash);
+            }
+            std::sort(hashes.begin(), hashes.end());
+            for (int i=0; i < hashes.size() ; i++) {
+                hash_string += std::to_string(hashes[i]);
+            }
+            return hash_string;
+        }
+
         void fprint(FILE* f) {
             unsigned int bit_pos, byte_pos, value, byte;
             fprintf(f, "Bloom Filter: \n [ ");
