@@ -2,6 +2,10 @@
 #define OrdinaryBloomFilter_hpp
 
 #include <vector>
+#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/framework/tensor_types.h"
+#include "tensorflow/core/framework/op.h"
+#include "tensorflow/core/framework/op_kernel.h"
 #include "AbstractBloomFilter.hpp"
 #include "MurmurHash.hpp"
 
@@ -13,6 +17,9 @@ namespace bloom {
 
 #include "CountingBloomFilter.hpp"
 #include "PairedBloomFilter.hpp"
+
+
+using namespace tensorflow;
 
 namespace bloom {
 
@@ -74,8 +81,40 @@ namespace bloom {
             std::sort(hashes.begin(), hashes.end());
             for (int i=0; i < hashes.size() ; i++) {
                 hash_string += std::to_string(hashes[i]);
+//                std::cout << "  hash: " << hash_string <<std::endl;
             }
             return hash_string;
+        }
+
+        int Get_Hash(T const& o, uint8_t i) {
+                return super::ComputeHash(o, i) % (super::GetnumBytes()*8);
+        }
+
+        uint8_t Get_numHashes() {
+                return super::GetNumHashes();
+        }
+
+        size_t Get_numBytes() {
+                return super::GetnumBytes();
+        }
+
+        int find(const Tensor& indices, int x) {
+        auto indices_flat = indices.flat<int>();
+        for (int i=0; i<indices_flat.size(); ++i) {   // Dummy lookup
+            if (indices_flat(i) == x)
+                return 1;
+        }
+        return 0;
+    }
+
+        int Compute_False_Positives(int N, const Tensor& indices) {
+            int false_positives = 0;
+            for (int i=0; i<N; ++i) {
+                if (Query(i) && !find(indices, i)) {
+                    false_positives++;
+                }
+            }
+            return false_positives;
         }
 
         void fprint(FILE* f) {
