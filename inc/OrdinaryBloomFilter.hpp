@@ -21,6 +21,17 @@ namespace bloom {
 
 using namespace tensorflow;
 
+namespace std {
+    template<>
+    struct hash<bloom::HashParams<uint32_t>> {
+        size_t operator()(bloom::HashParams<uint32_t> const &s) const {
+            uint32_t out;
+            bloom::MurmurHash3::murmur_hash3_x86_32((uint32_t*) &s.a, sizeof(s.a), s.b, (uint32_t*) &out);
+            return out;
+        }
+};
+}
+
 namespace bloom {
 
     template <typename T>
@@ -99,11 +110,11 @@ namespace bloom {
         }
 
         int find(const Tensor& indices, int x) {
-        auto indices_flat = indices.flat<int>();
-        for (int i=0; i<indices_flat.size(); ++i) {   // Dummy lookup
-            if (indices_flat(i) == x)
-                return 1;
-        }
+            auto indices_flat = indices.flat<int>();
+            for (int i=0; i<indices_flat.size(); ++i) {   // Dummy lookup
+                if (indices_flat(i) == x)
+                    return 1;
+            }
         return 0;
     }
 
